@@ -1,0 +1,25 @@
+name: Local Playwright Docker Functional
+
+on: [workflow_dispatch]
+
+jobs:
+  test-functional:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clear Reports Directory
+        run: rm -rf reports || true
+
+      - name: Prepare new Reports Directory
+        run: mkdir -p reports
+
+      - name: Set Browser Environment Variable
+        run: echo "BROWSER=${{ matrix.browser }}" >> $GITHUB_ENV
+        
+      - name: Run Playwright Tests
+        run: pytest tests/tests_ui/ --browser ${{ matrix.browser }}

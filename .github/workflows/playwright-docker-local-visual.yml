@@ -1,0 +1,38 @@
+name: Local Playwright Docker Visual
+
+on: [workflow_dispatch]
+
+jobs:
+  test-visual:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clear Reports Directory
+        run: rm -rf reports || true
+
+      - name: Prepare new Reports Directory
+        run: mkdir -p reports
+
+      - name: Save Snapshot State Before Test
+        run: find tests_visual/snapshots -type f -name "*.png" | sort > before.txt
+
+      - name: Run Playwright Tests
+        run: pytest tests/tests_visual/ --browser ${{ matrix.browser }}
+
+      - name: Compare Snapshot State
+        run: |
+          find tests_visual/snapshots -type f -name "*.png" | sort > after.txt
+          if ! diff before.txt after.txt > /dev/null; then
+            echo "snapshots_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "snapshots_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Cleanup Temporary Files
+        run: |
+          rm before.txt after.txt || true
